@@ -1,0 +1,396 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+/* ── Reset & base ───────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #120f0a;
+  --surface:     #1e1a12;
+  --surface-2:   #2a2419;
+  --border:      #342e24;
+  --text:        #d2c2a6;
+  --text-dim:    #7a6e5e;
+  --text-faint:  #403830;
+  --gold:        #7aad55;
+  --gold-bright: #9ecc7a;
+  --amber:       #4a8038;
+  --color-gold:  #c9a227;
+  --color-gold-bright: #e8c050;
+  --warning:     #c08830;
+  --red:         #8a2020;
+  --red-bright:  #b03030;
+  --serif:       'Georgia', 'Times New Roman', serif;
+  --sans:        system-ui, -apple-system, sans-serif;
+  --title-font:  'Cinzel Decorative', Georgia, serif;
+  --ui-font:     'Cormorant Garamond', Georgia, serif;
+  font-size: 17px;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ui-font);
+  font-weight: 600;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: inherit;
+}
+
+button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Animations ─────────────────────────────────────────────────────────── */
+
+@keyframes resourcePulse {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+
+@keyframes deltaFloat {
+  0%   { opacity: 1; transform: translate(-50%, 0); }
+  70%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -28px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseDreadOverflow {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.18); }
+}
+
+@keyframes slowReveal {
+  0%   { opacity: 0; }
+  45%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes blessingPop {
+  0%   { transform: scale(0.7) rotate(-2deg); opacity: 0; }
+  60%  { transform: scale(1.06) rotate(0.5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes socketGleam {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(0,0,0,0.55), 0 0 4px 2px rgba(212,160,16,0.60); }
+  50%       { box-shadow: 0 0 0 1px rgba(0,0,0,0.40), 0 0 10px 4px rgba(212,160,16,0.95); }
+}
+
+@keyframes pulsePrompt {
+  0%, 100% { opacity: 0.38; }
+  50%       { opacity: 0.85; }
+}
+
+@keyframes pileInsert {
+  0%   { transform: translateY(-55px) scale(0.88); opacity: 0; }
+  60%  { transform: translateY(4px) scale(1.02); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes pileShuffle {
+  0%   { transform: rotate(0deg) translateX(0) scale(1); }
+  10%  { transform: rotate(-12deg) translateX(-16px) scale(0.95); }
+  25%  { transform: rotate(9deg) translateX(14px) scale(1.03); }
+  42%  { transform: rotate(-6deg) translateX(-9px) scale(0.97); }
+  58%  { transform: rotate(4deg) translateX(7px) scale(1.01); }
+  74%  { transform: rotate(-2deg) translateX(-3px) scale(0.99); }
+  100% { transform: rotate(0deg) translateX(0) scale(1); }
+}
+
+@keyframes reshuffleToast {
+  0%   { opacity: 0; transform: translateY(-12px) scale(0.96); }
+  12%  { opacity: 1; transform: translateY(0) scale(1); }
+  78%  { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(6px) scale(0.98); }
+}
+
+.pile-insert  { animation: pileInsert 0.52s cubic-bezier(0.2, 0.8, 0.4, 1) forwards; }
+.pile-shuffle { animation: pileShuffle 0.95s ease-out; }
+.reshuffle-toast { animation: reshuffleToast 3.2s ease forwards; }
+
+/* ── Draw + card animations ─────────────────────────────────────────────── */
+
+/* Phase 1: top card lifts off pile */
+@keyframes cardLiftUp {
+  from { transform: scale(1)    translateY(0);   }
+  to   { transform: scale(1.18) translateY(-8%); }
+}
+.card-lift-up { animation: cardLiftUp 0.22s ease-out forwards; }
+
+/* Phase 3: zooms from lifted position to fill screen */
+@keyframes cardZoomFill {
+  from { transform: scale(0.42); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+.card-zoom-fill { animation: cardZoomFill 0.3s cubic-bezier(0.2, 0, 0.35, 1) forwards; }
+
+/* Option resolved: card collapses into the draw pile (upper-centre) */
+@keyframes sweepToDeck {
+  0%   { transform: scale(1);     opacity: 1; }
+  100% { transform: scale(0.07);  opacity: 0; }
+}
+.card-sweep-to-deck {
+  animation: sweepToDeck 0.36s cubic-bezier(0.55, 0, 1, 1) forwards;
+  transform-origin: 50% 42%;
+}
+
+
+/* ── Page-turn (setup screens) ──────────────────────────────────────────── */
+@keyframes pageInRight  { from { opacity: 0; transform: translateX(52px); }  to { opacity: 1; transform: translateX(0); } }
+@keyframes pageInLeft   { from { opacity: 0; transform: translateX(-52px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes pageOutLeft  { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-52px); } }
+@keyframes pageOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(52px); } }
+
+.page-in-right  { animation: pageInRight  0.26s ease-out; }
+.page-in-left   { animation: pageInLeft   0.26s ease-out; }
+.page-out-left  { animation: pageOutLeft  0.22s ease-in  forwards; }
+.page-out-right { animation: pageOutRight 0.22s ease-in  forwards; }
+
+/* ── Screen helpers ─────────────────────────────────────────────────────── */
+.screen-fade  { animation: fadeIn 0.28s ease-out; }
+.screen-slide { animation: slideUp 0.32s ease-out; }
+.screen-slow  { animation: slowReveal 1.6s ease-out; }
+
+/* ── Flip card ──────────────────────────────────────────────────────────── */
+.flip-scene {
+  perspective: 900px;
+  cursor: pointer;
+}
+.flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.52s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.flip-inner.is-flipped { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flip-front { transform: rotateY(180deg); }
+
+/* ── Card parchment ─────────────────────────────────────────────────────── */
+.card-parchment {
+  background:
+    radial-gradient(ellipse at 18% 22%, rgba(190,155,90,0.11) 0%, transparent 55%),
+    radial-gradient(ellipse at 82% 78%, rgba(130,95,55,0.08) 0%, transparent 55%),
+    linear-gradient(158deg, #2d2720 0%, #24201a 55%, #292418 100%);
+  border: 1px solid #3a3225;
+  box-shadow:
+    inset 0 0 40px rgba(0,0,0,0.4),
+    inset 1px 1px 0 rgba(220,190,120,0.04),
+    0 6px 24px rgba(0,0,0,0.55),
+    0 2px 6px rgba(0,0,0,0.4);
+}
+
+.card-enter { animation: cardEnter 0.3s ease-out; }
+
+/* ── Resource counter ───────────────────────────────────────────────────── */
+.res-counter {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  gap: 2px;
+}
+
+.res-value {
+  display: inline-block;
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: color 0.4s;
+  /* P20-K: force lining + tabular figures so 3/4/5/7/9 don't sit low
+     (oldstyle figures had descenders → numbers looked vertically misaligned
+     and further from the icon than 0/2). */
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+}
+.res-value.pulsing { animation: resourcePulse 0.38s ease-out; }
+.res-value.critical { animation: pulseDreadOverflow 1.2s ease-in-out infinite; }
+
+.res-delta {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: deltaFloat 0.88s ease-out forwards;
+  z-index: 10;
+}
+
+
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+.btn-primary {
+  background: var(--surface-2);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: 0.75rem 1.5rem;
+  letter-spacing: 0.1em;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.btn-primary:hover:not(:disabled) { background: rgba(200,146,42,0.1); }
+
+.btn-secondary {
+  /* P20-M: was --border outline + --text-dim text, which read as disabled.
+     Give it a faint-gold border and parchment text so it's clearly an enabled
+     button — just subordinate to the solid-gold primary. */
+  background: transparent;
+  border: 1px solid rgba(200,146,42,0.38);
+  color: rgba(218,198,162,0.85);
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+.btn-secondary:hover:not(:disabled) { border-color: rgba(200,146,42,0.7); color: var(--gold); }
+
+.btn-draw {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: 1rem 3.5rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.24em;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-draw:hover { background: rgba(200,146,42,0.07); box-shadow: 0 0 24px rgba(200,146,42,0.14); }
+
+.option-btn {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.85rem 1rem;
+  text-align: left;
+  transition: border-color 0.18s, background 0.18s;
+}
+.option-btn:hover:not(:disabled) { border-color: rgba(200,146,42,0.5); background: var(--surface-2); }
+.option-btn:disabled { background: var(--surface); border-color: var(--text-faint); }
+
+.menu-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  text-align: left;
+  padding: 0.55rem 0;
+  font-size: 1rem;
+  font-family: var(--ui-font);
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  display: block;
+  width: 100%;
+}
+.menu-btn:hover:not(:disabled) { color: var(--gold); border-bottom-color: var(--border); }
+.menu-btn:disabled { opacity: 0.28; }
+
+/* ── Menu selection cards ───────────────────────────────────────────────── */
+.menu-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: rgba(10, 8, 5, 0.72);
+  border: 1px solid var(--gold);
+  box-shadow: 0 0 16px rgba(122, 173, 85, 0.10), inset 0 0 24px rgba(0,0,0,0.45);
+  padding: 0.9rem 1.1rem;
+  font-family: var(--ui-font);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.22s, box-shadow 0.22s;
+}
+.menu-card * { font-weight: inherit; }
+.menu-card:hover:not(:disabled) {
+  background: rgba(122, 173, 85, 0.09);
+  box-shadow: 0 0 26px rgba(122, 173, 85, 0.22), inset 0 0 24px rgba(0,0,0,0.35);
+}
+.menu-card:disabled { opacity: 0.28; cursor: not-allowed; }
+
+/* ─── Settings slider styling ─────────────────────────────────────────────── */
+.settings-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.settings-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 1px solid rgba(0,0,0,0.5);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.settings-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 1px solid rgba(0,0,0,0.5);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.settings-slider::-moz-range-track {
+  background: var(--border);
+  height: 4px;
+  border-radius: 2px;
+}
+
+@keyframes activityRowIn {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+@keyframes weekBannerIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "project-abyssial",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "knowledge:gen": "npm run knowledge:gen-cards && npm run knowledge:gen-arch",
+    "knowledge:gen-cards": "tsx scripts/gen-knowledge-cards.ts",
+    "knowledge:gen-arch": "tsx scripts/gen-knowledge-arch.ts",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "posthog-js": "^1.398.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "serve": "^14.2.6",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.1",
+    "husky": "^9.1.7",
+    "tsx": "^4.22.4",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.4",
+    "vite-plugin-pwa": "^0.20.1",
+    "vitest": "^2.1.9",
+    "workbox-window": "^7.1.0"
+  }
+}

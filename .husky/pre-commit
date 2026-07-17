@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+# Non-blocking knowledge regeneration.
+# The vault is not git-tracked; outputs live on disk only.
+# If generation fails, we warn but never block the commit.
+
+if ! npm run --silent knowledge:gen 2>/tmp/knowledge-gen.log; then
+  echo "warning: knowledge regeneration failed (see /tmp/knowledge-gen.log) — commit continuing" >&2
+fi
+
+exit 0

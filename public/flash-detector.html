@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lightning Flash Detector v2</title>
+  <style>
+    body { background: #111; color: #ccc; font-family: monospace; padding: 1rem; }
+    video { max-width: 320px; display: block; margin: 0.5rem 0; border: 1px solid #444; }
+    .controls { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0; }
+    button { padding: 0.4rem 0.8rem; cursor: pointer; }
+    canvas { border: 1px solid #444; margin: 0.5rem 0; }
+    #meter { display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0; }
+    #meter-bar { width: 300px; height: 20px; background: #222; border: 1px solid #555; position: relative; }
+    #meter-fill { height: 100%; transition: width 0.05s; }
+    #meter-val { min-width: 4em; }
+    #log { background: #000; padding: 0.5rem; max-height: 300px; overflow-y: auto; font-size: 0.8rem; white-space: pre-wrap; margin-top: 0.5rem; }
+    .flash { color: #ff6; font-weight: bold; }
+    .info { color: #888; }
+    .detail { color: #666; font-size: 0.75rem; }
+    #graph { width: 100%; height: 100px; background: #000; margin-top: 0.5rem; }
+    .flash-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0.3rem 0;
+    }
+    .flash-time {
+      width: 4rem;
+      text-align: right;
+    }
+    .flash-size label {
+      margin-right: 0.4rem;
+      font-size: 0.85rem;
+    }
+    </style>
+</head>
+<body>
+  <h2>Lightning Flash Detector v2</h2>
+  <p>Lower threshold, live brightness meter, graph. Pause at a flash → note the timestamp.</p>
+
+  <div class="controls">
+    <button id="btn-intro">Load intro.mp4</button>
+    <button id="btn-menu">Load menu.mp4</button>
+    <button id="btn-scan">Scan for flashes</button>
+    <span id="status">Ready</span>
+  </div>
+
+  <div style="display: flex; gap: 1rem;">
+    <div>
+      <video id="video" controls width="320"></video>
+
+    </div>
+    <div style="flex:1; min-width: 300px;">
+      <div id="meter">
+        <span>Brightness:</span>
+        <div id="meter-bar">
+          <div id="meter-fill" style="width:0%; background: linear-gradient(90deg, #333, #ff6, #fff);"></div>
+        </div>
+        <span id="meter-val">0</span>
+        <span>| threshold:</span>
+        <input id="threshold" type="range" min="5" max="250" value="15" style="width:100px">
+        <span id="thresh-val">15</span>
+      </div>
+      <canvas id="graph" width="600" height="80"></canvas>
+      <div style="margin-top: 0.5rem;">
+        <b>Marked flashes:</b> <div id="flash-list">(none)</div>
+      </div>
+    </div>
+    </div>
+<div id="seek-container" style="margin-top:0.5rem;">
+  <input id="seek-slider" type="range" min="0" max="0" step="0.01" style="width:100vw;">
+  <span id="seek-time" style="display:inline-block; margin-left:0.5rem;">0.00 / 0.00</span>
+</div>
+
+  <div style="display: flex; gap: 0.5rem; margin: 0.5rem 0;">
+    <button id="btn-mark">Mark flash at current time</button>
+    <button id="btn-clear">Clear marks</button>
+  </div>
+
+  <h3>Log</h3>
+  <div id="log">Open a video and click Scan.</div>
+
+  <script>
+    const video = document.getElementById('video')
+    const log = document.getElementById('log')
+    const status = document.getElementById('status')
+    const meterFill = document.getElementById('meter-fill')
+    const meterVal = document.getElementById('meter-val')
+    const thresholdSlider = document.getElementById('threshold')
+    const threshVal = document.getElementById('thresh-val')
+    const flashList = document.getElementById('flash-list');
+
+// Update flash size when a radio button changes
+flashList.addEventListener('change', (e) => {
+  if (e.target && e.target.type === 'radio' && e.target.name) {
+    const match = e.target.name.match(/^size-(\d+)$/);
+    if (match) {
+      const idx = parseInt(match[1], 10);
+      flashes[idx].size = e.target.value;
+      // Refresh the displayed array (optional)
+      logLine('');
+      logLine(`=== ARRAY for thunder schedule ===`, 'info');
+      logLine(`[${flashes.map(f => `{time:${f.time.toFixed(2)},area:${f.area ?? '?'},size:"${f.size}"}`).join(', ')}]`, 'flash');
+    }
+  }
+});
+    const graphCanvas = document.getElementById('graph')
+    const graphCtx = graphCanvas.getContext('2d')
+    const seekSlider = document.getElementById('seek-slider')
+    const seekTime = document.getElementById('seek-time')
+
+    const TRIM = 0.5
+    let flashes = []
+    let brightnessHistory = []
+    let scanning = false
+
+    thresholdSlider.oninput = () => { threshVal.textContent = thresholdSlider.value }
+
+    function logLine(text, cls = '') {
+      const d = document.createElement('div')
+      d.textContent = text
+      if (cls) d.className = cls
+      log.appendChild(d)
+      log.scrollTop = log.scrollHeight
+    }
+
+    function loadVideo(src) {
+      return new Promise(resolve => {
+        video.pause();
+        // Clear any previous src and source elements
+        video.removeAttribute('src');
+        while (video.firstChild) video.removeChild(video.firstChild);
+
+        // Set up event handlers BEFORE loading
+        let resolved = false;
+        const safeResolve = () => { if (!resolved) { resolved = true; resolve(); } };
+
+        video.onloadedmetadata = () => {
+          const dur = video.duration.toFixed(2);
+          logLine(`Loaded: ${src.split('/').pop()} — duration: ${dur}s, visible: ${TRIM}s to ${(video.duration-TRIM).toFixed(2)}s`, 'info');
+          status.textContent = `Loaded (${dur}s)`;
+          // Initialize seek slider and display
+          if (seekSlider && seekTime) {
+            seekSlider.max = video.duration;
+            seekSlider.value = video.currentTime;
+            const updateSeek = () => {
+              const cur = video.currentTime.toFixed(2);
+              const total = video.duration ? video.duration.toFixed(2) : '0.00';
+              seekTime.textContent = `${cur} / ${total}`;
+            };
+            // Slider input changes video time
+            seekSlider.oninput = () => {
+              video.currentTime = parseFloat(seekSlider.value);
+              updateSeek();
+            };
+            // Keep slider in sync during playback
+            video.addEventListener('timeupdate', () => {
+              seekSlider.value = video.currentTime;
+              updateSeek();
+            });
+            // Initial display
+            updateSeek();
+          }
+          safeResolve();
+        };
+
+        video.onerror = () => {
+          const mediaError = video.error;
+          const msg = mediaError ? mediaError.message : 'unknown error';
+          logLine(`Error loading video ${src}: ${msg}`, 'info');
+          safeResolve();
+        };
+
+        // Use video.src approach (proven to work for local files)
+        video.src = src;
+        video.load();
+      });
+    }
+
+    let _pixelReadWarned = false
+    function readPixelData() {
+      const canvas = document.createElement('canvas')
+      canvas.width = video.videoWidth || 320
+      canvas.height = video.videoHeight || 240
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      return ctx.getImageData(0, 0, canvas.width, canvas.height).data
+    }
+
+    function getBrightness() {
+      let data
+      try {
+        data = readPixelData()
+      } catch (e) {
+        if (!_pixelReadWarned) {
+          _pixelReadWarned = true
+          logLine('⚠️ Cannot read video pixels on file:// protocol. Scan & mark require an HTTP server (e.g. `npx serve`).', 'info')
+          console.error('getImageData failed:', e)
+        }
+        return 0
+      }
+      let total = 0
+      const len = data.length / 4
+      for (let i = 0; i < data.length; i += 4) {
+        total += (data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114)
+      }
+      return total / len;
+}
+
+function getFlashArea() {
+  let data
+  try {
+    data = readPixelData()
+  } catch (e) {
+    if (!_pixelReadWarned) {
+      _pixelReadWarned = true
+      logLine('⚠️ Cannot read video pixels on file:// protocol. Scan & mark require an HTTP server.', 'info')
+      console.error('getImageData failed:', e)
+    }
+    return 0
+  }
+  const thresh = parseInt(thresholdSlider.value, 10);
+  let brightCount = 0;
+  const total = data.length / 4;
+  for (let i = 0; i < data.length; i += 4) {
+    const lum = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
+    if (lum > thresh) brightCount++;
+  }
+  return (brightCount / total) * 100;
+}
+
+function classifySize(areaPercent) {
+  if (areaPercent < 1)   return "XS";
+  if (areaPercent < 5)   return "S";
+  if (areaPercent < 15)  return "M";
+  if (areaPercent < 30)  return "L";
+  return "XL";
+}
+
+    function drawGraph() {
+      const w = graphCanvas.width
+      const h = graphCanvas.height
+      graphCtx.fillStyle = '#000'
+      graphCtx.fillRect(0, 0, w, h)
+
+      const thresh = parseInt(thresholdSlider.value)
+      // Draw threshold line
+      graphCtx.strokeStyle = '#444'
+      graphCtx.beginPath()
+      graphCtx.moveTo(0, h - (thresh / 255) * h)
+      graphCtx.lineTo(w, h - (thresh / 255) * h)
+      graphCtx.stroke()
+
+      if (brightnessHistory.length < 2) return
+      const maxVal = 255
+      graphCtx.strokeStyle = '#ff6'
+      graphCtx.beginPath()
+      for (let i = 0; i < brightnessHistory.length; i++) {
+        const x = (i / brightnessHistory.length) * w
+        const y = h - (brightnessHistory[i] / maxVal) * h
+        if (i === 0) graphCtx.moveTo(x, y)
+        else graphCtx.lineTo(x, y)
+      }
+      graphCtx.stroke()
+
+      // Mark flash positions
+      for (const f of flashes) {
+        const x = ((f.time - TRIM) / (video.duration - 2*TRIM)) * w
+        graphCtx.strokeStyle = '#f44'
+        graphCtx.beginPath()
+        graphCtx.moveTo(x, 0)
+        graphCtx.lineTo(x, h)
+        graphCtx.stroke()
+      }
+    }
+
+function updateFlashList() {
+  // Clear existing list
+  flashList.innerHTML = '';
+  if (flashes.length === 0) {
+    flashList.textContent = '(none)';
+    return;
+  }
+  flashes.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'flash-item';
+    // Time span
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'flash-time';
+    timeSpan.textContent = f.time.toFixed(2) + 's';
+    item.appendChild(timeSpan);
+    // Radio group
+    const radioContainer = document.createElement('span');
+    radioContainer.className = 'flash-size';
+    const sizes = ['XS','S','M','L','XL'];
+    sizes.forEach(s => {
+      const label = document.createElement('label');
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = `size-${i}`;
+      input.value = s;
+      if (f.size === s) input.checked = true;
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(' ' + s));
+      radioContainer.appendChild(label);
+    });
+    item.appendChild(radioContainer);
+    flashList.appendChild(item);
+  });
+}
+
+    async function scanVideo() {
+      if (scanning) return
+      scanning = true
+      brightnessHistory = []
+      if (flashes.length === 0) logLine('Scanning... (this plays through the visible window)')
+
+      try {
+        video.currentTime = TRIM
+        await video.play()
+      } catch (e) {
+        logLine(`⚠️ Failed to play video: ${e.message}`, 'info')
+        console.error('video.play() failed:', e)
+        scanning = false
+        return
+      }
+
+      const endTime = video.duration - TRIM
+      const fps = 30
+      const interval = 1 / fps
+      const thresh = parseInt(thresholdSlider.value, 10)
+      let lastFlashTime = -2
+
+      while (video.currentTime < endTime && scanning) {
+        await new Promise(r => setTimeout(r, interval * 1000))
+        const ct = video.currentTime
+        let b
+        try {
+          b = getBrightness()
+        } catch (e) {
+          logLine(`⚠️ Brightness read error at ${ct.toFixed(2)}s: ${e.message}`, 'info')
+          break
+        }
+        brightnessHistory.push(b)
+
+        // Update live meter
+        const pct = Math.min(100, (b / 255) * 100)
+        meterFill.style.width = pct + '%'
+        meterVal.textContent = Math.round(b)
+        drawGraph()
+
+        if (b > thresh && ct - lastFlashTime > 1.0) {
+          const existing = flashes.find(f => Math.abs(f.time - ct) < 0.5)
+          if (!existing) {
+            const area = getFlashArea();
+            flashes.push({ time: ct, brightness: Math.round(b), area: Math.round(area), size: classifySize(area) })
+            logLine(`⚡ FLASH at ${ct.toFixed(2)}s (brightness: ${Math.round(b)}, area: ${area.toFixed(1)}%, size: ${classifySize(area)})`, 'flash')
+            lastFlashTime = ct
+            updateFlashList()
+          }
+        }
+      }
+      video.pause()
+      scanning = false
+      status.textContent = 'Scan complete'
+      if (brightnessHistory.length > 0) {
+        const maxB = Math.max(...brightnessHistory)
+        const minB = Math.min(...brightnessHistory)
+        logLine(`Brightness range: ${Math.round(minB)} — ${Math.round(maxB)} (threshold: ${thresh})`, 'info')
+
+        if (flashes.length === 0) {
+          logLine(`No flashes detected. Try a lower threshold. Brightness peaked at ${Math.round(maxB)}.`, 'info')
+        }
+      }
+      updateFlashList()
+    }
+
+    // ── Controls ──
+    document.getElementById('btn-intro').onclick = async () => {
+      await loadVideo('intro.mp4')
+    }
+    document.getElementById('btn-menu').onclick = async () => {
+      await loadVideo('menu.mp4')
+    }
+    document.getElementById('btn-scan').onclick = scanVideo
+    document.getElementById('btn-mark').onclick = () => {
+      try {
+        const ct = video.currentTime
+        if (ct > 0) {
+          const area = getFlashArea();
+          flashes.push({ time: ct, brightness: Math.round(getBrightness()), area: Math.round(area), size: classifySize(area) })
+          logLine(`📌 MANUAL MARK at ${ct.toFixed(2)}s (area: ${area.toFixed(1)}%, size: ${classifySize(area)})`, 'flash')
+          updateFlashList()
+        }
+      } catch (e) {
+        logLine(`⚠️ Mark failed: ${e.message}`, 'info')
+        console.error('Mark error:', e)
+      }
+    }
+    document.getElementById('btn-clear').onclick = () => {
+      flashes = []
+      brightnessHistory = []
+      updateFlashList()
+      logLine('Cleared all marks')
+      drawGraph()
+    }
+
+    // Live brightness readout during manual playback
+    video.ontimeupdate = () => {
+      if (!scanning && video.readyState >= 2) {
+        const b = getBrightness()
+        const pct = Math.min(100, (b / 255) * 100)
+        meterFill.style.width = pct + '%'
+        meterVal.textContent = Math.round(b)
+      }
+    }
+
+    // Keyboard shortcuts for seeking
+    document.addEventListener('keydown', (e) => {
+      // Ignore when typing in inputs or other focusable elements
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
+      const step = e.shiftKey ? 1 : 0.05;
+      if (e.key === 'ArrowLeft') {
+        video.currentTime = Math.max(0, video.currentTime - step);
+        e.preventDefault();
+      } else if (e.key === 'ArrowRight') {
+        video.currentTime = Math.min(video.duration, video.currentTime + step);
+        e.preventDefault();
+      } else if (e.key === ' ') {
+        if (video.paused) video.play(); else video.pause();
+        e.preventDefault();
+      }
+    });
+  </script>
+</body>
+</html>

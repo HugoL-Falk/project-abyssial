@@ -1,0 +1,14 @@
+node_modules
+dist
+.env
+.env.local
+*.local
+
+# Large media assets (store in vault, not git)
+# Note: public/*.mp4 intentionally NOT gitignored — intro.mp4 + menu.mp4 (~6MB each) are tracked.
+public/*.webm
+public/*.mov
+.worktrees/
+
+# Superpowers brainstorm scratch
+.superpowers/
