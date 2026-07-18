@@ -39,7 +39,7 @@ export function IntroScreen() {
             You have been given responsibility for a cult.
           </p>
           <p style={{ margin: 0 }}>
-            The objective is straightforward: summon one of the Ancient Ones — entities that
+            The objective is straightforward: summon one of the Ancient Ones. Entities that
             predate recorded memory and will, in all likelihood, render most of what you know
             irrelevant. This is considered a success condition.
           </p>
@@ -54,10 +54,10 @@ export function IntroScreen() {
 
         {/* Buttons */}
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <MenuButton variant="secondary" style={{ flex: 1 }} onClick={() => { playSfx('click'); goToPhase('menu') }}>
+          <MenuButton variant="secondary" style={{ flex: 1, minWidth: 0 }} onClick={() => { playSfx('click'); goToPhase('menu') }}>
             Back
           </MenuButton>
-          <MenuButton variant="primary" style={{ flex: 1 }} onClick={() => { playSfx('click'); startTutorial() }}>
+          <MenuButton variant="primary" style={{ flex: 1, minWidth: 0 }} onClick={() => { playSfx('click'); startTutorial() }}>
             Next
           </MenuButton>
         </div>
