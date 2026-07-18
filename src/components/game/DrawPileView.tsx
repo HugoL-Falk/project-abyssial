@@ -51,7 +51,8 @@ export function DrawPileView({
       {/* Top slot — WeekBanner */}
       {!drawAnim && weekBannerVisible && (
         <div style={{ position: 'absolute', top: '70px', left: 0, right: 0, zIndex: 10, display: 'flex', justifyContent: 'center' }}>
-          <WeekBanner reshuffleCount={reshuffleCount} unravellingTier={unravellingTier} suppress={isTutorial} isEmpty={drawPileCount === 0} />
+          {/* P27-14: suppress only at week-1 start — allow banner after tutorial reshuffle */}
+          <WeekBanner reshuffleCount={reshuffleCount} unravellingTier={unravellingTier} suppress={isTutorial && reshuffleCount === 0} isEmpty={drawPileCount === 0} />
         </div>
       )}
 

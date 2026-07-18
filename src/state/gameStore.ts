@@ -1616,10 +1616,12 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     // nextCycleQueue already contains the predetermined post-reshuffle sequence.
     if (state.runConfig?.isTutorial) {
       const deck = tutorialReshuffle(state.deck)
-      // Reshuffle banner displays "A new week begins" / "Doom escalates" inline above
-      // the draw deck; the activity log is reset to empty for the new week.
+      // P27-14: increment reshuffleCount so week display advances (Week 1→2) and
+      // the WeekBanner unsuppresses for the post-reshuffle transition.
+      // Activity log is reset to empty for the new week (same as non-tutorial path).
       set({
         deck,
+        reshuffleCount: state.reshuffleCount + 1,
         activityLog: [],
         activityBatchSealed: true,
       })
