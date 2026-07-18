@@ -145,16 +145,17 @@ export function OptionsColumn({ visibleOpts, allBlocked, succumbFlavour, onResol
 
   function renderOptionRow({ idx, option, available: avail, effectiveEffects, affordabilityShortfall, disabledReason, prepRequirement, isPrepGated }: VisibleOpt) {
     const isSuccumb = !!option.succumbOption
-    // P22-65: disabled option rows use <div role="button"> instead of <button> so
-    // nested HintTooltip <button> elements are valid HTML and reachable on touch.
-    // Mobile browsers may ignore taps on a <button> nested inside another <button>.
-    const Wrapper = avail ? 'button' : 'div'
+    // P22-65 / P27-09: always use <div role="button"> — never <button> — so nested
+    // HintTooltip <button> elements remain valid HTML and receive clicks on all
+    // pointer types. Touch-capable laptop browsers (and some desktop Chrome versions)
+    // silently drop clicks on a <button> nested inside another <button>.
     return (
-      <Wrapper
+      <div
         key={idx}
-        {...(avail ? { type: 'button' as const, onClick: () => { playSfx('click'); onResolve(idx) } } : {})}
+        {...(avail ? { onClick: () => { playSfx('click'); onResolve(idx) } } : {})}
         role="button"
         aria-disabled={!avail}
+        tabIndex={avail ? 0 : -1}
         style={{
           ...btnBase,
           background: avail ? 'rgba(4,2,1,0.82)' : 'rgba(8,5,3,0.6)',
@@ -261,7 +262,7 @@ export function OptionsColumn({ visibleOpts, allBlocked, succumbFlavour, onResol
             {option.flavourText}
           </p>
         )}
-      </Wrapper>
+      </div>
     )
   }
 
