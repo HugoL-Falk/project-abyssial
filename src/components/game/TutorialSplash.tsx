@@ -27,10 +27,10 @@ export function TutorialSplash({ onBegin }: { onBegin: () => void }) {
       }} />
 
       <div style={{
-        fontSize: '0.55rem',
-        letterSpacing: '0.22em',
-        textTransform: 'uppercase',
-        color: 'rgba(200,144,32,0.6)',
+        fontSize: '1.05rem',
+        fontFamily: 'var(--title-font)',
+        letterSpacing: '0.06em',
+        color: 'rgba(200,144,32,0.82)',
         marginBottom: '1.4rem',
       }}>
         Before you begin
@@ -51,8 +51,8 @@ export function TutorialSplash({ onBegin }: { onBegin: () => void }) {
         ].map((line, i) => (
           <div key={i} style={{ display: 'flex', gap: '0.7rem', alignItems: 'flex-start' }}>
             <span style={{
-              color: 'rgba(200,144,32,0.45)',
-              fontSize: '0.65rem',
+              color: 'rgba(200,144,32,0.55)',
+              fontSize: '0.85rem',
               marginTop: '0.1rem',
               flexShrink: 0,
             }}>

@@ -237,10 +237,10 @@ export function MainMenu() {
               </p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <MenuButton variant="primary" onClick={() => { playSfx('click'); setShowPrompt(false); goToPhase('intro') }}>
+              <MenuButton variant="primary" style={{ width: '100%', minWidth: 0 }} onClick={() => { playSfx('click'); setShowPrompt(false); goToPhase('intro') }}>
                 Walk me through it
               </MenuButton>
-              <MenuButton variant="secondary" style={{ fontSize: '0.72rem', opacity: 0.75 }} onClick={() => { playSfx('click'); setShowPrompt(false); skipTutorial() }}>
+              <MenuButton variant="secondary" style={{ width: '100%', minWidth: 0, fontSize: '0.72rem', opacity: 0.75 }} onClick={() => { playSfx('click'); setShowPrompt(false); skipTutorial() }}>
                 I know enough
               </MenuButton>
             </div>
