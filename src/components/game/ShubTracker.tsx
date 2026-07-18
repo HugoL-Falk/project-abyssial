@@ -12,8 +12,8 @@ function HexPip({ filled }: { filled: boolean }) {
         width: '9px',
         height: '9px',
         clipPath: HEX_CLIP,
-        background: filled ? '#9b6dbf' : '#2a1e42',
-        filter: filled ? 'drop-shadow(0 0 3px rgba(112,64,160,0.5))' : undefined,
+        background: filled ? '#d4601a' : 'rgba(212,96,26,0.18)',
+        filter: filled ? 'drop-shadow(0 0 3px rgba(212,96,26,0.45))' : undefined,
         flexShrink: 0,
       }}
     />
@@ -35,15 +35,16 @@ export function ShubTracker() {
         alignItems: 'center',
         justifyContent: 'center',
         gap: '8px',
+        marginTop: '-0.75rem',
         padding: '3px 14px',
-        background: '#100e1a',
-        borderBottom: '1px solid #221830',
+        background: 'rgba(10,5,2,0.9)',
+        borderBottom: '1px solid rgba(212,96,26,0.25)',
       }}
     >
       <span
         style={{
           fontSize: '10px',
-          color: '#6a4898',
+          color: '#d4601a',
           letterSpacing: '0.05em',
           textTransform: 'uppercase',
         }}
@@ -55,7 +56,7 @@ export function ShubTracker() {
           <HexPip key={i} filled={i < filled} />
         ))}
       </div>
-      <span style={{ fontSize: '10px', color: '#5a4080' }}>
+      <span style={{ fontSize: '10px', color: 'rgba(212,96,26,0.55)' }}>
         {theChanged} / {VICTORY_TARGET}
       </span>
     </div>
