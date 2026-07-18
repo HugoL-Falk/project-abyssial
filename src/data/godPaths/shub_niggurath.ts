@@ -136,17 +136,6 @@ export const SHUB_NIGGURATH_CHAIN: Card[] = [
         },
       },
       {
-        label: 'Sing the offering',
-        flavourText: 'Sung at the gathering, sung again here. The grove answers. One of ours does too.',
-        condition: { type: 'hasPrepTag', tag: 'attended_seance' },
-        effects: [
-          { type: 'consumePrepTag', tag: 'attended_seance' },
-          { type: 'resource', resource: 'dread', delta: 1 },
-          { type: 'resource', resource: 'influence', delta: 1 },
-          { type: 'advanceGodPath' },
-        ],
-      },
-      {
         label: 'Chase it off',
         flavourText: 'It left. The trail of affected grass ends at the woods. It was back by dawn.',
         effects: [
