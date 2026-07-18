@@ -228,7 +228,7 @@ export function DrawnCard({ card, compact = false, textVisible = true, hiddenPre
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0,
         background: 'linear-gradient(to bottom, rgba(6,4,2,0.97) 0%, rgba(6,4,2,0.72) 48%, transparent 100%)',
-        padding: compact ? '0.7rem 0.9rem 2.5rem' : '4.4rem 0.9rem 3.5rem',
+        padding: compact ? '0.7rem 0.9rem 2.5rem' : (runConfig?.godPath === 'shub_niggurath' ? '5.05rem 0.9rem 3.5rem' : '4.4rem 0.9rem 3.5rem'),
         opacity: textVisible ? 1 : 0,
         transform: collapsed ? 'translateY(-100%)' : 'translateY(0)',
         transition: 'opacity 0.65s ease, transform 0.3s ease-out',
